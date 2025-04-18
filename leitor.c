@@ -15,6 +15,7 @@ typedef struct literal
 typedef struct clausula
 {
     literal literais[MAX]; // Implementar lista encadeada aqui
+    int tam;
 } clausula;
 
 typedef struct formula
@@ -24,27 +25,75 @@ typedef struct formula
     int literal_tam;
 } formula;
 
+formula *inicializar_formula()
+{
+    formula *nova_formula = (formula*) malloc(sizeof(formula));
+    for (int i = 0; i < MAX; i++)
+    {
+        nova_formula->clausulas[i].tam = 0;
+    }
+    return nova_formula;
+}
+
+void ler_clausula(clausula *c)
+{
+    int j = 0;
+    while (1) // Ler literais
+    {
+        int aux;
+        scanf("%d", &aux);
+        if (aux == 0) return;
+
+        else if (aux > 0)
+        {
+            c->literais[j].item = aux;
+            c->literais[j].negado = false;
+        }
+        
+        else
+        {
+            aux *= -1;
+            c->literais[j].item = aux;
+            c->literais[j].negado = true;
+        }
+
+        c->tam++;
+        j++;
+    }
+}
+
 void leitor(formula *f)
 {
-    int aux;
-
     for (int i = 0; i < f->clausula_qtd; i++)
     {
-        while (1) // Ler literais
+        ler_clausula(&f->clausulas[i]);
+    }
+}
+
+void printador(formula *f)
+{
+    for (int i = 0; i < f->clausula_qtd ; i++)
+    {
+        printf("(");
+        for (int j = 0; j < f->clausulas[i].tam; j++)
         {
-            scanf("%d", &aux);
-            if (aux == 0) break;
-            else if (aux > 0)
+            if(f->clausulas[i].literais[j].negado)
             {
-                f->clausulas[i]->literais[aux-1].item = 1;
-                f->clausular[i]->literais[aux-1].negado = false;
+                printf("~%d", f->clausulas[i].literais[j].item);
             }
             else
             {
-                aux *= -1;
-                f->clausulas[i]->literais[aux-1].item = 1;
-                f->clausular[i]->literais[aux-1].negado = true;
+                printf("%d", f->clausulas[i].literais[j].item);
             }
+            if (j < f->clausulas[i].tam - 1)
+            {
+                printf(" V ");
+            }
+        }
+        printf(")");
+        if (i < f->clausula_qtd-1)
+        {
+            printf(" ^ ");
         }
     }
 }
@@ -54,11 +103,10 @@ int main()
     char comando;
 
     int n;
-    int i = 0;
 
     char comentario[MAX];
     char formato[5];
-    formula total;
+    formula *total = inicializar_formula();
 
     while (1)
     {
@@ -73,7 +121,7 @@ int main()
 
         else if (comando == 'p')
         {
-            scanf("%s %d %d", formato, &total.literal_tam, &total.clausula_qtd);
+            scanf("%s %d %d", formato, &total->literal_tam, &total->clausula_qtd);
 
             if (strcmp(formato, "cnf") != 0)
             {
@@ -81,7 +129,11 @@ int main()
                 break;
             }
             
-            // FUNÇÃO AQUI
+            leitor(total);
+
+            printador(total);
+
+            return 0;
         }
         else
         {
