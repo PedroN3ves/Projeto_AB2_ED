@@ -1,36 +1,16 @@
-#include <stdio.h>
+#include "../libs/operacoes_sat.h"
 #include <stdlib.h>
-#include <stdbool.h>
 
-#define UNDEFINED 2
-
-typedef struct literal
+partial_interpretation inicializar_partial_interpretation(formula *F)
 {
-    int item;
-    bool negado;
-    struct literal *next;
-} literal;
-
-typedef struct clausula
-{
-    struct clausula *next;
-    literal *head_literal;
-    int tam;
-} clausula;
-
-typedef struct formula
-{
-    clausula *head_clausula;
-    int clausula_qtd;
-    int literal_tam;
-} formula;
-
-typedef struct partial_interpretation
-{
-    short *valores;
-} partial_interpretation;
-
-// Funções
+    partial_interpretation new_pi;
+    new_pi.valores = malloc(sizeof(short) * F->literal_tam + 1);
+    for (int i = 0; i < F->literal_tam + 1; i++)
+    {
+        new_pi.valores[i] = UNDEFINED;
+    }
+    return new_pi;
+}
 
 bool implica_F(formula *F, partial_interpretation *I)
 {
@@ -99,16 +79,14 @@ bool implica_negF(formula *F, partial_interpretation *I)
 partial_interpretation uniao(partial_interpretation I, int literal_tam, int xi, short valor)
 {
     partial_interpretation novo;
-    novo.valores = malloc(sizeof(short) * literal_tam);
-    for (int i = 0; i < literal_tam; i++)
+    novo.valores = malloc(sizeof(short) * literal_tam + 1);
+    for (int i = 0; i < literal_tam + 1; i++)
     {
         novo.valores[i] = I.valores[i];
     }
     novo.valores[xi] = valor;
     return novo;
 }
-
-// Construção da árvore
 
 bool sat(formula *F, partial_interpretation I)
 {
@@ -122,7 +100,7 @@ bool sat(formula *F, partial_interpretation I)
     }
 
     int xi = -1;
-    for (int i = 0; i < F->literal_tam; i++)
+    for (int i = 0; i < F->literal_tam + 1; i++)
     {
         if (I.valores[i] == UNDEFINED)
         {
@@ -152,10 +130,4 @@ bool sat(formula *F, partial_interpretation I)
     free(I_false.valores);
 
     return false;
-}
-
-int main()
-{
-
-    return 0;
 }

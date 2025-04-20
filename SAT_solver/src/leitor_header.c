@@ -1,60 +1,7 @@
+#include "../libs/leitor_header.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <stdbool.h>
-
-#define MAX 10000
-
-/* 
-Códigos da interpretação parcial
-0 = False
-1 = True
-2 = Não alocado
-*/
-
-
-typedef struct literal
-{
-    int item;
-    bool negado;
-    struct literal *next;
-} literal;
-
-typedef struct clausula
-{
-    struct clausula *next;
-    literal *head_literal;
-    int tam;
-} clausula;
-
-typedef struct formula
-{
-    clausula *head_clausula;
-    int clausula_qtd;
-    int literal_tam;
-} formula;
-
-clausula *add_clausula(formula *f)
-{
-    clausula *nova = malloc(sizeof(clausula));
-    nova->tam = 0;
-    nova->head_literal = NULL;
-    nova->next = f->head_clausula;
-    f->head_clausula = nova;
-    return nova;
-}
-
-
-literal* add_literal(literal *head, int item, bool negado)
-{
-    literal *new_literal = (literal*) malloc(sizeof(literal));
-    new_literal->item = item;
-    new_literal->negado = negado;
-    new_literal->next = head;
-    return new_literal;
-}
-
+#include <string.h>
 
 formula *inicializar_formula()
 {
@@ -65,9 +12,29 @@ formula *inicializar_formula()
     return nova_formula;
 }
 
+clausula *add_clausula(formula *f)
+{
+
+    clausula *nova = malloc(sizeof(clausula));
+    nova->tam = 0;
+    nova->head_literal = NULL;
+    nova->next = f->head_clausula;
+    f->head_clausula = nova;
+    return nova;
+}
+
+literal *add_literal(literal *head, int item, bool negado)
+{
+    literal *new_literal = (literal *)malloc(sizeof(literal));
+    new_literal->item = item;
+    new_literal->negado = negado;
+    new_literal->next = head;
+    return new_literal;
+}
+
 int ler_clausula(clausula *c, formula *f)
 {
-    while (1) // Ler literais
+    while (1)
     {
         int aux;
         scanf("%d", &aux);
@@ -77,14 +44,15 @@ int ler_clausula(clausula *c, formula *f)
             return -1;
         }
 
-        if (aux == 0) return 0;
+        if (aux == 0)
+            return 0;
         else if (aux > 0)
         {
             c->head_literal = add_literal(c->head_literal, aux, false);
         }
         else
         {
-            c->head_literal = add_literal(c->head_literal, aux, true);
+            c->head_literal = add_literal(c->head_literal, -aux, true);
         }
 
         c->tam++;
@@ -96,7 +64,8 @@ int leitor(formula *f)
     for (int i = 0; i < f->clausula_qtd; i++)
     {
         clausula *nova = add_clausula(f);
-        if (ler_clausula(nova, f) == -1) return -1;
+        if (ler_clausula(nova, f) == -1)
+            return -1;
     }
     return 0;
 }
@@ -133,19 +102,15 @@ void printador(formula *f)
     printf("\n");
 }
 
-int main()
+formula *gerar_formula_cnf()
 {
     char comando;
-
     char comentario[MAX];
     char formato[5];
-
     formula *total = inicializar_formula();
-
 
     while (scanf(" %c", &comando) != EOF)
     {
-
         if (comando == 'c')
         {
             fgets(comentario, MAX, stdin);
@@ -158,23 +123,20 @@ int main()
             if (strcmp(formato, "cnf") != 0)
             {
                 printf("ERROR\n");
-                break;
+                return NULL;
             }
-            
+
             if (leitor(total) == -1)
             {
                 printf("ERRO DE LEITURA, VALOR FORA DO ESCOPO\n");
-                return -1;
+                return NULL;
             };
-
-            printador(total);
         }
         else
         {
             printf("ERROR\n");
-            break;
+            return NULL;
         }
     }
-    free(total);
-    return 0;
+    return total;
 }
