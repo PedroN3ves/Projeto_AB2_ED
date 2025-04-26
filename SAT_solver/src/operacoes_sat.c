@@ -88,15 +88,22 @@ partial_interpretation uniao(partial_interpretation I, int literal_tam, int xi, 
     return novo;
 }
 
-bool sat(formula *F, partial_interpretation I)
+no_arvore_binaria *sat(formula *F, partial_interpretation I)
 {
+    no_arvore_binaria *n = (no_arvore_binaria *)malloc(sizeof(no_arvore_binaria));
+    n->interpretacao = I;
+    n->left = NULL;
+    n->right = NULL;
+
     if (implica_F(F, &I))
     {
-        return true;
+        n->resultado = true;
+        return n;
     }
     if (implica_negF(F, &I))
     {
-        return false;
+        n->resultado = false;
+        return n;
     }
 
     int xi = -1;
@@ -108,26 +115,21 @@ bool sat(formula *F, partial_interpretation I)
             break;
         }
     }
+
     if (xi == -1)
     {
-        return false;
+        n->resultado = false;
+        return n;
     }
+
+    n->valor = xi;
 
     partial_interpretation I_true = uniao(I, F->literal_tam, xi, true);
-    if (sat(F, I_true))
-    {
-        free(I_true.valores);
-        return true;
-    }
-    free(I_true.valores);
+    n->left = sat(F, I_true);
 
     partial_interpretation I_false = uniao(I, F->literal_tam, xi, false);
-    if (sat(F, I_false))
-    {
-        free(I_false.valores);
-        return true;
-    }
-    free(I_false.valores);
+    n->right = sat(F, I_false);
 
-    return false;
+    n->resultado = n->left->resultado || n->right->resultado;
+    return n;
 }

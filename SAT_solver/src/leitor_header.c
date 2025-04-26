@@ -77,7 +77,6 @@ void printador(formula *f)
     {
         printf("(");
         literal *l_atual = c_atual->head_literal;
-        int count = 0;
 
         while (l_atual)
         {
@@ -90,7 +89,6 @@ void printador(formula *f)
                 printf(" V ");
 
             l_atual = l_atual->next;
-            count++;
         }
 
         printf(")");
