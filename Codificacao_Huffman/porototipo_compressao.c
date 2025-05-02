@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define ASCII 256
 
 // 29 bytes
 typedef struct noHuffman
@@ -17,6 +20,12 @@ typedef struct heap
     int tamanho;
     int capacidade;
 } heap;
+
+typedef struct tabelaHuffman
+{
+    char caracter;
+    char codigo[ASCII];
+} tabelaHuffman;
 
 noHuffman *criar_no(char caracter, int frequencia)
 {
@@ -195,26 +204,124 @@ void liberar_lista(noHuffman *head)
     }
 }
 
-void imprimir_pre_ordem(noHuffman *raiz)
+void serializar_arvore(noHuffman *raiz, FILE *saida, int *tam_arvore)
 {
     if (raiz == NULL)
     {
         return;
     }
 
-    if (raiz->left != NULL || raiz->right != NULL)
+    // for folha
+    if (raiz->left == NULL && raiz->right == NULL)
     {
-        // É um nó interno
-        printf("*");
+        if (raiz->caracter == '*' || raiz->caracter == '\\')
+        {
+            fputc('\\', saida);
+            (*tam_arvore)++;
+        }
+        fputc(raiz->caracter, saida);
+        (*tam_arvore)++;
     }
     else
     {
-        // É uma folha
-        printf("%c", raiz->caracter);
+        fputc('*', saida);
+        (*tam_arvore)++;
+        serializar_arvore(raiz->left, saida, tam_arvore);
+        serializar_arvore(raiz->right, saida, tam_arvore);
+    }
+}
+
+void construir_tabela(noHuffman *no, char *codigo_atual, int profundidade, tabelaHuffman *tabela, int *i)
+{
+    // i* para manter seu valor após a recursão
+    if (no == NULL)
+    {
+        return;
     }
 
-    imprimir_pre_ordem(raiz->left);
-    imprimir_pre_ordem(raiz->right);
+    // for folha
+    if (no->left == NULL && no->right == NULL)
+    {
+        tabela[*i].caracter = no->caracter;
+        strncpy(tabela[*i].codigo, codigo_atual, profundidade);
+        tabela[*i].codigo[profundidade] = '\0';
+        (*i)++;
+    }
+
+    if (no->left != NULL)
+    {
+        codigo_atual[profundidade] = '0';
+        construir_tabela(no->left, codigo_atual, profundidade + 1, tabela, i);
+    }
+
+    if (no->right != NULL)
+    {
+        codigo_atual[profundidade] = '1';
+        construir_tabela(no->right, codigo_atual, profundidade + 1, tabela, i);
+    }
+}
+
+void escrever_bits(FILE *saida, tabelaHuffman *tabela, int tam_tabela, const char *original, int *lixo)
+{
+    FILE *file = fopen(original, "rb");
+    if (file == NULL)
+    {
+        perror("Erro ao abrir arquivo original");
+        exit(1);
+    }
+
+    unsigned char byte = 0;
+    int bit_index = 0;
+    int c;
+    while ((c = fgetc(file)) != EOF)
+    {
+        for (int i = 0; i < tam_tabela; i++)
+        {
+            if (tabela[i].caracter == (char)c)
+            {
+                char *codigo_temp = tabela[i].codigo;
+                for (int j = 0; codigo_temp[j] != '\0'; j++)
+                {
+                    byte = byte << 1;
+                    if (codigo_temp[j] == '1')
+                    {
+                        byte = byte | 1;
+                    }
+                    bit_index++;
+
+                    if (bit_index == 8)
+                    {
+                        fputc(byte, saida);
+                        byte = 0;
+                        bit_index = 0;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    if (bit_index > 0)
+    {
+        byte = byte << (8 - bit_index);
+        fputc(byte, saida);
+        *lixo = 8 - bit_index;
+    }
+    else
+    {
+        *lixo = 0;
+    }
+
+    fclose(file);
+}
+
+void escrever_cabecalho(FILE *saida, int lixo, int tam_arvore)
+{
+    unsigned short cabecalho = 0;
+    cabecalho = cabecalho | (lixo << 13);
+    cabecalho = cabecalho | (tam_arvore & 0b0001111111111111); // impedir que tam_arvore "vaze" para o lixo;
+    fputc(cabecalho >> 8, saida);
+    fputc(cabecalho & 0b11111111, saida); // garantir que o primeiro byte seja 00000000
 }
 
 void liberar_arvore(noHuffman *raiz)
@@ -233,7 +340,7 @@ int main(int argc, char **argv)
     // ex: argv[0] = "./sample.exe" | argv[1] = "filename.txt"
     if (argc != 2)
     {
-        printf("Erro! Entrada Incompleta\n");
+        perror("Erro! Entrada Incompleta");
         return 1;
     }
 
@@ -246,15 +353,12 @@ int main(int argc, char **argv)
     }
 
     noHuffman *lista_frequencia = NULL;
-    int total_bytes = 0;
 
     int byte;
     while ((byte = fgetc(file)) != EOF)
     {
         add_atualizar(&lista_frequencia, (char)byte);
-        total_bytes++;
     }
-
     fclose(file);
 
     heap *h = criar_heap(256);
@@ -267,13 +371,36 @@ int main(int argc, char **argv)
 
     noHuffman *raiz = criar_arvore(h);
 
-    printf("Arvore de Huffman em pre-ordem:\n");
-    imprimir_pre_ordem(raiz);
+    tabelaHuffman tabela[ASCII];
+    int tam_tabela = 0;
+    char codigo_atual[ASCII];
+    construir_tabela(raiz, codigo_atual, 0, tabela, &tam_tabela);
+
+    FILE *saida = fopen("comprimido.huff", "wb");
+    if (saida == NULL)
+    {
+        perror("Erro ao criar arquivo de saida");
+        return 1;
+    }
+
+    // reserva 16 bits(2 bytes) para lixo + tam_arvore
+    fputc(0, saida);
+    fputc(0, saida);
+
+    int tam_arvore = 0;
+    serializar_arvore(raiz, saida, &tam_arvore);
+
+    int lixo = 0;
+    escrever_bits(saida, tabela, tam_arvore, argv[1], &lixo);
+
+    fseek(saida, 0, SEEK_SET);
+    escrever_cabecalho(saida, lixo, tam_arvore);
+
+    fclose(saida);
+    printf("Compressao feita!\n");
 
     liberar_lista(lista_frequencia);
-
     liberar_arvore(raiz);
-
     free(h->dados);
     free(h);
 
