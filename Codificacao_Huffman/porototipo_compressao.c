@@ -479,7 +479,7 @@ int main(int argc, char **argv)
     serializar_arvore(raiz, saida, &tam_arvore);
 
     int lixo = 0;
-    escrever_bits(saida, tabela, tam_arvore, argv[1], &lixo);
+    escrever_bits(saida, tabela, tam_tabela, argv[1], &lixo);
 
     fseek(saida, 0, SEEK_SET);
     escrever_cabecalho(saida, lixo, tam_arvore);
