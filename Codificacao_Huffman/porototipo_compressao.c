@@ -5,6 +5,15 @@
 #define ASCII 256
 
 // 29 bytes
+/**
+ * Estrutura que representa um nó da arvore de Huffman e também da lista encadeada
+ * 
+ * @field caracter O caracter ou byte do nó para nós folha, para nós pai guarda um '*'
+ * @field frequencia Frequência de ocorrência do caracter ou byte no arquivo
+ * @field next Ponteiro para o próximo nó da lista encadeada
+ * @field left Ponteiro para o filho esquerdo da árvore
+ * @field right Ponteiro para o filho direito da árvore
+ */
 typedef struct noHuffman
 {
     char caracter;
@@ -14,6 +23,14 @@ typedef struct noHuffman
     struct noHuffman *right;
 } noHuffman;
 
+// 29 bytes
+/**
+ * Estrutura de Min Heap para construção da árvore de Huffman
+ * 
+ * @field dados Array de ponteiros para nós do Huffman
+ * @field tamanho Número atual de elementos na heap
+ * @field capacidade Total de elementos que a heap suporta
+ */
 typedef struct heap
 {
     noHuffman **dados;
@@ -21,12 +38,20 @@ typedef struct heap
     int capacidade;
 } heap;
 
+
 typedef struct tabelaHuffman
 {
     char caracter;
     char codigo[ASCII];
 } tabelaHuffman;
 
+/**
+ * Aloca e inicializa um novo nó Huffman
+ * 
+ * @param caracter O caracter do novo nó
+ * @param frequencia Frequencia do caracter a ser adicionado
+ * @return Ponteiro para o novo nó criado
+ */
 noHuffman *criar_no(char caracter, int frequencia)
 {
     noHuffman *novo_no = (noHuffman *)malloc(sizeof(noHuffman));
@@ -45,6 +70,14 @@ noHuffman *criar_no(char caracter, int frequencia)
     return novo_no;
 }
 
+/**
+ * Adiciona um nó huffman ou atualiza sua frequencia
+ * Se o caracter já existir na lista, aumenta sua frequencia em 1
+ * Se não, cria um novo nó com frequencia 1
+ * 
+ * @param head Ponteiro para o inicio da lista de nós
+ * @param caracter Caracter a ser adicionado/atualizado
+ */
 void add_atualizar(noHuffman **head, char caracter)
 {
     noHuffman *atual = *head;
@@ -103,6 +136,13 @@ int get_right_index(int i)
     return 2 * i + 2;
 }
 
+/**
+ * Critério de comparação para heap, qual dos nós tem maior frequência (Desempata baseado no valor do byte)
+ * 
+ * @param a Primeiro valor a ser comparado
+ * @param b Segundo valor a ser comparado
+ * @return Valor inteiro para se usar na heap mínima
+ */
 int comparar(noHuffman *a, noHuffman *b)
 {
     if (a->frequencia != b->frequencia)
@@ -177,6 +217,12 @@ noHuffman *dequeue_min(heap *h)
     return min;
 }
 
+/**
+ * Constrói a árvore de Huffman a partir de um heap de frequências.
+ * 
+ * @param h Heap contendo os nós com suas frequências
+ * @return  Raiz da árvore de Huffman construída
+ */
 noHuffman *criar_arvore(heap *h)
 {
     while (h->tamanho > 1)
@@ -193,6 +239,11 @@ noHuffman *criar_arvore(heap *h)
     return dequeue_min(h);
 }
 
+/**
+ * Libera a memória da lista encadeada de nós
+ * 
+ * @param head Ponteiro pra o primeiro nó da lista
+ */
 void liberar_lista(noHuffman *head)
 {
     noHuffman *atual = head;
@@ -204,6 +255,13 @@ void liberar_lista(noHuffman *head)
     }
 }
 
+/**
+ * Serializa a árvore de Huffman em pré-ordem para o arquivo de saída.
+ * 
+ * @param raiz       Raiz da árvore a ser serializada
+ * @param saida      Arquivo de saída onde a árvore será escrita
+ * @param tam_arvore Ponteiro para contador do tamanho da árvore (será atualizado)
+ */
 void serializar_arvore(noHuffman *raiz, FILE *saida, int *tam_arvore)
 {
     if (raiz == NULL)
@@ -231,6 +289,15 @@ void serializar_arvore(noHuffman *raiz, FILE *saida, int *tam_arvore)
     }
 }
 
+/**
+ * Constrói a tabela de codificação percorrendo a árvore de Huffman.
+ * 
+ * @param no Nó atual sendo processado
+ * @param codigo_atual Buffer para armazenar o código binário sendo construído
+ * @param profundidade Profundidade atual na árvore
+ * @param tabela Tabela de codificação sendo preenchida
+ * @param i Ponteiro para índice atual na tabela
+ */
 void construir_tabela(noHuffman *no, char *codigo_atual, int profundidade, tabelaHuffman *tabela, int *i)
 {
     // i* para manter seu valor após a recursão
@@ -261,6 +328,15 @@ void construir_tabela(noHuffman *no, char *codigo_atual, int profundidade, tabel
     }
 }
 
+/**
+ * Escreve os bits no arquivo comprimido pelo Huffman
+ * 
+ * @param saida Arquivo a ser escrito
+ * @param tabela Tabela que mapeia valores e caracteres
+ * @param tam_tabela Tamanho da tabela
+ * @param original Arquivo a ser comprimido
+ * @param lixo Ponteiro para a variável que vai armazenar quantos bits de lixo o ultimo byte possuí
+ */
 void escrever_bits(FILE *saida, tabelaHuffman *tabela, int tam_tabela, const char *original, int *lixo)
 {
     FILE *file = fopen(original, "rb");
@@ -315,6 +391,13 @@ void escrever_bits(FILE *saida, tabelaHuffman *tabela, int tam_tabela, const cha
     fclose(file);
 }
 
+/**
+ * Escreve o cabeçalho no arquivo compactado
+ * 
+ * @param saida O arquivo onde vai ser escrito o cabeçalho
+ * @param lixo Numero de bits lixo no ultimo byte
+ * @param tam_arvore Tamanho da árvore a ser impressa no cabeçalho
+ */
 void escrever_cabecalho(FILE *saida, int lixo, int tam_arvore)
 {
     unsigned short cabecalho = 0;
@@ -324,6 +407,11 @@ void escrever_cabecalho(FILE *saida, int lixo, int tam_arvore)
     fputc(cabecalho & 0b11111111, saida); // garantir que o primeiro byte seja 00000000
 }
 
+/**
+ * Libera a memória da árvore de Huffman
+ * 
+ * @param raiz A raiz da árvore
+ */
 void liberar_arvore(noHuffman *raiz)
 {
     if (raiz == NULL)
