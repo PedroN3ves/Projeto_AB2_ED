@@ -423,17 +423,14 @@ void liberar_arvore(noHuffman *raiz)
     free(raiz);
 }
 
-int main(int argc, char **argv)
+int main()
 {
-    // ex: argv[0] = "./sample.exe" | argv[1] = "filename.txt"
-    if (argc != 2)
-    {
-        perror("Erro! Entrada Incompleta");
-        return 1;
-    }
+    char nome_arquivo[256];
 
-    // "rb" = "read binary"
-    FILE *file = fopen(argv[1], "rb");
+    printf("Digite o nome do arquivo a ser comprimido: ");
+    scanf("%255s", nome_arquivo);
+
+    FILE *file = fopen(nome_arquivo, "rb");
     if (file == NULL)
     {
         perror("Erro ao abrir arquivo");
@@ -449,7 +446,7 @@ int main(int argc, char **argv)
     }
     fclose(file);
 
-    heap *h = criar_heap(256);
+    heap *h = criar_heap(ASCII);
     noHuffman *atual = lista_frequencia;
     while (atual != NULL)
     {
@@ -464,14 +461,24 @@ int main(int argc, char **argv)
     char codigo_atual[ASCII];
     construir_tabela(raiz, codigo_atual, 0, tabela, &tam_tabela);
 
-    FILE *saida = fopen("comprimido.huff", "wb");
+    // Gerar nome do arquivo de saída com extensão .huff
+    char nome_saida[300];
+    strcpy(nome_saida, nome_arquivo);
+    char *ponto = strrchr(nome_saida, '.');
+    if (ponto != NULL)
+    {
+        *ponto = '\0'; // remove a extensão original
+    }
+    strcat(nome_saida, ".huff");
+
+    FILE *saida = fopen(nome_saida, "wb");
     if (saida == NULL)
     {
-        perror("Erro ao criar arquivo de saida");
+        perror("Erro ao criar arquivo de saída");
         return 1;
     }
 
-    // reserva 16 bits(2 bytes) para lixo + tam_arvore
+    // reserva 2 bytes para o cabeçalho (lixo + tamanho da árvore)
     fputc(0, saida);
     fputc(0, saida);
 
@@ -479,13 +486,13 @@ int main(int argc, char **argv)
     serializar_arvore(raiz, saida, &tam_arvore);
 
     int lixo = 0;
-    escrever_bits(saida, tabela, tam_tabela, argv[1], &lixo);
+    escrever_bits(saida, tabela, tam_tabela, nome_arquivo, &lixo);
 
     fseek(saida, 0, SEEK_SET);
     escrever_cabecalho(saida, lixo, tam_arvore);
 
     fclose(saida);
-    printf("Compressao feita!\n");
+    printf("Compressao feita! Arquivo salvo como: %s\n", nome_saida);
 
     liberar_lista(lista_frequencia);
     liberar_arvore(raiz);
