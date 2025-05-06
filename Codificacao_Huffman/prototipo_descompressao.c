@@ -8,14 +8,14 @@
 
 typedef struct noHuffman
 {
-    char caracter;
+    void *caracter; // adaptado para void*
     int frequencia;
     struct noHuffman *next;
     struct noHuffman *left;
     struct noHuffman *right;
 } noHuffman;
 
-noHuffman *criar_no(char caracter, int frequencia)
+noHuffman *criar_no(void *caracter, int frequencia)
 {
     noHuffman *novo = (noHuffman *)malloc(sizeof(noHuffman));
     novo->caracter = caracter;
@@ -32,6 +32,7 @@ void liberar_arvore(noHuffman *raiz)
         return;
     liberar_arvore(raiz->left);
     liberar_arvore(raiz->right);
+    free(raiz->caracter);
     free(raiz);
 }
 
@@ -43,13 +44,19 @@ noHuffman *desserializar_arvore(FILE *entrada, int *lidos)
     {
         c = fgetc(entrada);
         (*lidos)++;
-        return criar_no((char)c, 0);
+        void *carac = malloc(sizeof(char));
+        *(char *)carac = (char)c; // casting para transformar de ponteiro genérico para char*
+        return criar_no(carac, 0);
     }
     if (c != '*')
     {
-        return criar_no((char)c, 0);
+        void *carac = malloc(sizeof(char));
+        *(char *)carac = (char)c;
+        return criar_no(carac, 0);
     }
-    noHuffman *no = criar_no('*', 0);
+    void *carac = malloc(sizeof(char));
+    *(char *)carac = '*';
+    noHuffman *no = criar_no(carac, 0);
     no->left = desserializar_arvore(entrada, lidos);
     no->right = desserializar_arvore(entrada, lidos);
     return no;
@@ -123,7 +130,7 @@ void descomprimir(const char *entrada_nome, const char *saida_nome)
 
             if (atual->left == NULL && atual->right == NULL)
             {
-                fputc(atual->caracter, saida);
+                fputc(*(char *)(atual->caracter), saida); // casting de void* para char
                 atual = raiz;
             }
         }
