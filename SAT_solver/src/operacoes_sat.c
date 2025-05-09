@@ -80,7 +80,7 @@ partial_interpretation uniao(partial_interpretation I, int literal_tam, int xi, 
 {
     partial_interpretation novo;
     novo.valores = malloc(sizeof(short) * literal_tam + 1);
-    for (int i = 0; i < literal_tam + 1; i++)
+    for (int i = 1; i < literal_tam + 1; i++)
     {
         novo.valores[i] = I.valores[i];
     }
@@ -107,7 +107,7 @@ no_arvore_binaria *sat(formula *F, partial_interpretation I)
     }
 
     int xi = -1;
-    for (int i = 0; i < F->literal_tam + 1; i++)
+    for (int i = 1; i < F->literal_tam + 1; i++)
     {
         if (I.valores[i] == UNDEFINED)
         {
