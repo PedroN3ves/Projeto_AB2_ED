@@ -6,12 +6,6 @@ dados <- read.csv(caminho,
                   sep = "", #o R analisará o que separa os dados do arquivo
                   col.names = c("Comparacao_sem_heap", "Comparacao_com_heap", "Tamanho"))
 
-# mostra os nomes das colunas do data frame para confirmar se estão corretos
-print(names(dados))
-
-# mostra a estrutura do data frame, incluindo tipos de dados e um resumo das colunas
-print(str(dados))
-
 # carrega o pacote ggplot2, que é usado para criar gráficos de forma mais flexível e bonita
 library(ggplot2)
 
