@@ -1,40 +1,10 @@
+#include "../libs/compressao.h"
+#include "../libs/descompressao.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 
-#define ASCII 256
-#define MAX_NOME 50
-
-typedef struct noHuffman
-{
-    void *caracter; // adaptado para void*
-    int frequencia;
-    struct noHuffman *next;
-    struct noHuffman *left;
-    struct noHuffman *right;
-} noHuffman;
-
-noHuffman *criar_no(void *caracter, int frequencia)
-{
-    noHuffman *novo = (noHuffman *)malloc(sizeof(noHuffman));
-    novo->caracter = caracter;
-    novo->frequencia = frequencia;
-    novo->left = NULL;
-    novo->right = NULL;
-    novo->next = NULL;
-    return novo;
-}
-
-void liberar_arvore(noHuffman *raiz)
-{
-    if (raiz == NULL)
-        return;
-    liberar_arvore(raiz->left);
-    liberar_arvore(raiz->right);
-    free(raiz->caracter);
-    free(raiz);
-}
 
 noHuffman *desserializar_arvore(FILE *entrada, int *lidos)
 {
@@ -44,19 +14,13 @@ noHuffman *desserializar_arvore(FILE *entrada, int *lidos)
     {
         c = fgetc(entrada);
         (*lidos)++;
-        void *carac = malloc(sizeof(char));
-        *(char *)carac = (char)c; // casting para transformar de ponteiro genérico para char*
-        return criar_no(carac, 0);
+        return criar_no((char)c, 0);
     }
     if (c != '*')
     {
-        void *carac = malloc(sizeof(char));
-        *(char *)carac = (char)c;
-        return criar_no(carac, 0);
+        return criar_no((char)c, 0);
     }
-    void *carac = malloc(sizeof(char));
-    *(char *)carac = '*';
-    noHuffman *no = criar_no(carac, 0);
+    noHuffman *no = criar_no('*', 0);
     no->left = desserializar_arvore(entrada, lidos);
     no->right = desserializar_arvore(entrada, lidos);
     return no;
@@ -130,7 +94,7 @@ void descomprimir(const char *entrada_nome, const char *saida_nome)
 
             if (atual->left == NULL && atual->right == NULL)
             {
-                fputc(*(char *)(atual->caracter), saida); // casting de void* para char
+                fputc(atual->caracter, saida);
                 atual = raiz;
             }
         }
@@ -139,33 +103,4 @@ void descomprimir(const char *entrada_nome, const char *saida_nome)
     fclose(entrada);
     fclose(saida);
     liberar_arvore(raiz);
-}
-
-int main()
-{
-    char entrada_nome[MAX_NOME];
-    char extensao[MAX_NOME];
-
-    printf("Digite o nome do arquivo comprimido: ");
-    scanf("%s", entrada_nome);
-
-    printf("Digite a extensao desejada para o arquivo descomprimido (ex: .txt, .bin, .pdf): ");
-    scanf("%s", extensao);
-
-    char saida_nome[MAX_NOME];
-    strcpy(saida_nome, entrada_nome);
-
-    char *ponto = strrchr(saida_nome, '.');
-    if (ponto != NULL)
-    {
-        *ponto = '\0'; // Remove a extensão
-    }
-
-    strcat(saida_nome, "(1)");
-    strcat(saida_nome, extensao); // Nova extensão
-
-    descomprimir(entrada_nome, saida_nome);
-
-    printf("Arquivo descomprimido salvo como: %s\n", saida_nome);
-    return 0;
 }
