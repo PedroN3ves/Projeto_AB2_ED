@@ -1,6 +1,7 @@
+caminho <- file.choose()
 # lê o arquivo comparacoes.csv do caminho indicado e cria um data frame chamado 'dados'
 # os nomes das colunas são definidos manualmente
-dados <- read.csv("C:/Users/Arthur/Desktop/testeemC/comparacoes.csv", 
+dados <- read.csv(caminho, 
                   header = TRUE, 
                   sep = "", #o R analisará o que separa os dados do arquivo
                   col.names = c("Comparacao_sem_heap", "Comparacao_com_heap", "Tamanho"))
