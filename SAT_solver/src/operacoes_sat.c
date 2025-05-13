@@ -12,7 +12,7 @@ partial_interpretation inicializar_partial_interpretation(formula *F)
     return new_pi;
 }
 
-bool implica_F(formula *F, partial_interpretation *I)
+bool implica_F(formula *F, partial_interpretation I)
 {
     clausula *clausula_atual = F->head_clausula;
     while (clausula_atual != NULL)
@@ -22,7 +22,7 @@ bool implica_F(formula *F, partial_interpretation *I)
 
         while (literal_atual != NULL)
         {
-            short val = I->valores[literal_atual->item];
+            short val = I.valores[literal_atual->item];
             if (val != UNDEFINED)
             {
                 bool v = val ^ literal_atual->negado;
@@ -44,7 +44,7 @@ bool implica_F(formula *F, partial_interpretation *I)
     return true;
 }
 
-bool implica_negF(formula *F, partial_interpretation *I)
+bool implica_negF(formula *F, partial_interpretation I)
 {
     clausula *clausula_atual = F->head_clausula;
     while (clausula_atual != NULL)
@@ -54,7 +54,7 @@ bool implica_negF(formula *F, partial_interpretation *I)
 
         while (literal_atual != NULL)
         {
-            short val = I->valores[literal_atual->item];
+            short val = I.valores[literal_atual->item];
             if (val == UNDEFINED)
             {
                 satisfaz = true;
@@ -95,12 +95,12 @@ no_arvore_binaria *sat(formula *F, partial_interpretation I)
     n->left = NULL;
     n->right = NULL;
 
-    if (implica_F(F, &I))
+    if (implica_F(F, I))
     {
         n->resultado = true;
         return n;
     }
-    if (implica_negF(F, &I))
+    if (implica_negF(F, I))
     {
         n->resultado = false;
         return n;
@@ -114,12 +114,6 @@ no_arvore_binaria *sat(formula *F, partial_interpretation I)
             xi = i;
             break;
         }
-    }
-
-    if (xi == -1)
-    {
-        n->resultado = false;
-        return n;
     }
 
     n->valor = xi;
