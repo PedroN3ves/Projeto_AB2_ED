@@ -6,18 +6,18 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-bool imprimir_primeiro_caminho_sat(no_arvore_binaria *raiz, int literal_tam)
+bool imprimir_primeiro_caminho_sat(no_arvore_binaria *no, int literal_tam)
 {
-    if (raiz == NULL)
+    if (no == NULL)
         return false;
 
-    if (raiz->resultado && raiz->left == NULL && raiz->right == NULL)
+    if (no->resultado && no->left == NULL && no->right == NULL)
     {
         for (int i = 1; i <= literal_tam; i++)
         {
-            if (raiz->interpretacao.valores[i] == 1)
+            if (no->interpretacao.valores[i] == 1)
                 printf("%d = 1\n", i);
-            else if (raiz->interpretacao.valores[i] == 0)
+            else if (no->interpretacao.valores[i] == 0)
                 printf("%d = 0\n", i);
             else
                 printf("%d = indefinido\n", i);
@@ -25,9 +25,9 @@ bool imprimir_primeiro_caminho_sat(no_arvore_binaria *raiz, int literal_tam)
         return true;
     }
 
-    if (imprimir_primeiro_caminho_sat(raiz->left, literal_tam))
+    if (imprimir_primeiro_caminho_sat(no->left, literal_tam))
         return true;
-    if (imprimir_primeiro_caminho_sat(raiz->right, literal_tam))
+    if (imprimir_primeiro_caminho_sat(no->right, literal_tam))
         return true;
 
     return false;

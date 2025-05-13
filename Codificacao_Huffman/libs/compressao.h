@@ -7,9 +7,18 @@
 
 #define ASCII 256
 
-// Estrutura que representa um nó da árvore de Huffman
+// 29 bytes
+/**
+ * Estrutura que representa um nó da arvore de Huffman e também da lista encadeada
+ * 
+ * @field caracter O caracter ou byte do nó para nós folha, para nós pai guarda um '*'
+ * @field frequencia Frequência de ocorrência do caracter ou byte no arquivo
+ * @field next Ponteiro para o próximo nó da lista encadeada
+ * @field left Ponteiro para o filho esquerdo da árvore
+ * @field right Ponteiro para o filho direito da árvore
+ */
 typedef struct noHuffman {
-    char caracter;
+    void *byte;
     int frequencia;
     struct noHuffman *next;
     struct noHuffman *left;
@@ -18,7 +27,7 @@ typedef struct noHuffman {
 
 // Estrutura para armazenar códigos de Huffman
 typedef struct tabelaHuffman {
-    char caracter;
+    void *byte;
     char codigo[ASCII];
 } tabelaHuffman;
 
@@ -30,8 +39,8 @@ typedef struct heap {
 } heap;
 
 // Funções para manipulação de nós e lista encadeada
-noHuffman *criar_no(char caracter, int frequencia);
-void add_atualizar(noHuffman **head, char caracter);
+noHuffman *criar_no(void* byte, int frequencia);
+void add_atualizar(noHuffman **head, void* byte);
 void liberar_lista(noHuffman *head);
 
 // Funções para manipulação de heap

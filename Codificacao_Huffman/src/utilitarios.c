@@ -54,14 +54,16 @@ int comp()
     int byte;
     while ((byte = fgetc(file)) != EOF)
     {
-        add_atualizar(&lista_frequencia, (char)byte);
+        unsigned char byte_char = byte;
+        add_atualizar(&lista_frequencia, &byte_char);
     }
     fclose(file);
 
     heap *h = criar_heap(ASCII);
     noHuffman *atual = lista_frequencia;
     while (atual != NULL) {
-        noHuffman *copia = criar_no(atual->caracter, atual->frequencia);
+        unsigned char byte_char = *(unsigned char*)atual->byte;
+        noHuffman *copia = criar_no(&byte_char, atual->frequencia);
         enqueue(h, copia);  
         atual = atual->next;
     }

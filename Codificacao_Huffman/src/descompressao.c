@@ -8,19 +8,24 @@
 
 noHuffman *desserializar_arvore(FILE *entrada, int *lidos)
 {
-    int c = fgetc(entrada);
+    unsigned char c;
+    fread(&c, 1, 1, entrada);
     (*lidos)++;
+
+    void* byte_ptr = &c;
+
     if (c == '\\')
     {
-        c = fgetc(entrada);
+        fread(&c, 1, 1, entrada);
         (*lidos)++;
-        return criar_no((char)c, 0);
+        return criar_no(byte_ptr, 0);
     }
     if (c != '*')
     {
-        return criar_no((char)c, 0);
+        return criar_no(byte_ptr, 0);
     }
-    noHuffman *no = criar_no('*', 0);
+    unsigned char asterisco = '*';
+    noHuffman *no = criar_no(&asterisco, 0);
     no->left = desserializar_arvore(entrada, lidos);
     no->right = desserializar_arvore(entrada, lidos);
     return no;
@@ -50,7 +55,7 @@ void descomprimir(const char *entrada_nome, const char *saida_nome)
     }
 
     noHuffman *atual = raiz; // percorrer a arvore
-    int c;
+    unsigned char c;
 
     fseek(entrada, 2 + tam_arvore, SEEK_SET); // pula os 2 bytes do cabeçalho e a árvore
 
@@ -94,7 +99,7 @@ void descomprimir(const char *entrada_nome, const char *saida_nome)
 
             if (atual->left == NULL && atual->right == NULL)
             {
-                fputc(atual->caracter, saida);
+                fwrite(atual->byte, 1, 1, saida);
                 atual = raiz;
             }
         }

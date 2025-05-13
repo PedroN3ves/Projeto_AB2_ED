@@ -15,12 +15,12 @@ ggplot(dados, aes(x = Tamanho)) +
   
   # adiciona os pontos para os dados da coluna Comparacao_sem_heap
   # com cor azul e um pouco de transparência
-  geom_point(aes(y = Comparacao_sem_heap, color = "Com Heap"), 
+  geom_point(aes(y = Comparacao_com_heap, color = "Com Heap"), 
              size = 4, alpha = 0.7) +
   
   # adiciona os pontos para os dados da coluna Comparacao_com_heap
   # com cor vermelha e o mesmo estilo visual
-  geom_point(aes(y = Comparacao_com_heap, color = "Sem Heap"), 
+  geom_point(aes(y = Comparacao_sem_heap, color = "Sem Heap"), 
              size = 4, alpha = 0.7) +
   
   # define os títulos do gráfico, dos eixos e da legenda de cores

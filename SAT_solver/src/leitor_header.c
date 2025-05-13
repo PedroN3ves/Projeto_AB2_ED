@@ -5,7 +5,7 @@
 
 formula *inicializar_formula()
 {
-    formula *nova_formula = malloc(sizeof(formula));
+    formula *nova_formula = (formula *) malloc(sizeof(formula));
     nova_formula->head_clausula = NULL;
     nova_formula->clausula_qtd = 0;
     nova_formula->literal_tam = 0;

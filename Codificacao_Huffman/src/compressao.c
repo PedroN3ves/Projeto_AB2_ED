@@ -1,58 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define ASCII 256
-
-// 29 bytes
-/**
- * Estrutura que representa um nó da arvore de Huffman e também da lista encadeada
- * 
- * @field caracter O caracter ou byte do nó para nós folha, para nós pai guarda um '*'
- * @field frequencia Frequência de ocorrência do caracter ou byte no arquivo
- * @field next Ponteiro para o próximo nó da lista encadeada
- * @field left Ponteiro para o filho esquerdo da árvore
- * @field right Ponteiro para o filho direito da árvore
- */
-typedef struct noHuffman
-{
-    char caracter;
-    int frequencia;
-    struct noHuffman *next;
-    struct noHuffman *left;
-    struct noHuffman *right;
-} noHuffman;
-
-// 29 bytes
-/**
- * Estrutura de Min Heap para construção da árvore de Huffman
- * 
- * @field dados Array de ponteiros para nós do Huffman
- * @field tamanho Número atual de elementos na heap
- * @field capacidade Total de elementos que a heap suporta
- */
-typedef struct heap
-{
-    noHuffman **dados;
-    int tamanho;
-    int capacidade;
-} heap;
-
-
-typedef struct tabelaHuffman
-{
-    char caracter;
-    char codigo[ASCII];
-} tabelaHuffman;
-
+#include "../libs/compressao.h"
+ 
 /**
  * Aloca e inicializa um novo nó Huffman
  * 
- * @param caracter O caracter do novo nó
+ * @param byte O caracter do novo nó
  * @param frequencia Frequencia do caracter a ser adicionado
  * @return Ponteiro para o novo nó criado
  */
-noHuffman *criar_no(char caracter, int frequencia)
+noHuffman *criar_no(void* byte, int frequencia)
 {
     noHuffman *novo_no = (noHuffman *)malloc(sizeof(noHuffman));
     if (novo_no == NULL)
@@ -61,7 +19,9 @@ noHuffman *criar_no(char caracter, int frequencia)
         exit(1);
     }
 
-    novo_no->caracter = caracter;
+    // Por ser ponteiro, se usa memcpy
+    novo_no->byte = malloc(1);
+    memcpy(novo_no->byte, byte, 1);
     novo_no->frequencia = frequencia;
     novo_no->next = NULL;
     novo_no->left = NULL;
@@ -76,14 +36,14 @@ noHuffman *criar_no(char caracter, int frequencia)
  * Se não, cria um novo nó com frequencia 1
  * 
  * @param head Ponteiro para o inicio da lista de nós
- * @param caracter Caracter a ser adicionado/atualizado
+ * @param byte Byte a ser adicionado/atualizado
  */
-void add_atualizar(noHuffman **head, char caracter)
+void add_atualizar(noHuffman **head, void* byte)
 {
     noHuffman *atual = *head;
     noHuffman *anterior = NULL;
 
-    while (atual != NULL && atual->caracter != caracter)
+    while (atual != NULL && memcmp(atual->byte, byte, 1) != 0)
     {
         anterior = atual;
         atual = atual->next;
@@ -95,7 +55,7 @@ void add_atualizar(noHuffman **head, char caracter)
     }
     else
     {
-        noHuffman *novo_no = criar_no(caracter, 1);
+        noHuffman *novo_no = criar_no(byte, 1);
 
         // caso lista vazia
         if (anterior == NULL)
@@ -151,7 +111,9 @@ int comparar(noHuffman *a, noHuffman *b)
     }
 
     // desempate por valor do byte
-    return (unsigned char)a->caracter - (unsigned char)b->caracter;
+    unsigned char byte_a = *(unsigned char*)a->byte;
+    unsigned char byte_b = *(unsigned char*)b->byte;
+    return byte_a - byte_b;
 }
 
 void swap(noHuffman **a, noHuffman **b)
@@ -230,7 +192,8 @@ noHuffman *criar_arvore(heap *h)
         noHuffman *esq = dequeue_min(h);
         noHuffman *dir = dequeue_min(h);
 
-        noHuffman *pai = criar_no('*', esq->frequencia + dir->frequencia);
+        unsigned char asterisco = '*';
+        noHuffman *pai = criar_no(&asterisco, esq->frequencia + dir->frequencia);
         pai->left = esq;
         pai->right = dir;
 
@@ -272,14 +235,17 @@ void serializar_arvore(noHuffman *raiz, FILE *saida, int *tam_arvore)
     // for folha
     if (raiz->left == NULL && raiz->right == NULL)
     {
-        if (raiz->caracter == '*' || raiz->caracter == '\\')
+        unsigned char byte = *(unsigned char*)raiz->byte;
+
+        if (byte == '*' || byte == '\\')
         {
             fputc('\\', saida);
             (*tam_arvore)++;
         }
-        fputc(raiz->caracter, saida);
+        fputc(byte, saida);
         (*tam_arvore)++;
     }
+    
     else
     {
         fputc('*', saida);
@@ -309,7 +275,8 @@ void construir_tabela(noHuffman *no, char *codigo_atual, int profundidade, tabel
     // for folha
     if (no->left == NULL && no->right == NULL)
     {
-        tabela[*i].caracter = no->caracter;
+        tabela[*i].byte = malloc(1);
+        memcpy(tabela[*i].byte, no->byte, 1);
         strncpy(tabela[*i].codigo, codigo_atual, profundidade);
         tabela[*i].codigo[profundidade] = '\0';
         (*i)++;
@@ -348,12 +315,12 @@ void escrever_bits(FILE *saida, tabelaHuffman *tabela, int tam_tabela, const cha
 
     unsigned char byte = 0;
     int bit_index = 0;
-    int c;
-    while ((c = fgetc(file)) != EOF)
+    unsigned char c;
+    while ((fread(&c, 1, 1, file) == 1))
     {
         for (int i = 0; i < tam_tabela; i++)
         {
-            if (tabela[i].caracter == (char)c)
+            if (memcmp(tabela[i].byte, &c, 1) == 0)
             {
                 char *codigo_temp = tabela[i].codigo;
                 for (int j = 0; codigo_temp[j] != '\0'; j++)
@@ -420,5 +387,6 @@ void liberar_arvore(noHuffman *raiz)
     }
     liberar_arvore(raiz->left);
     liberar_arvore(raiz->right);
+    free(raiz->byte);
     free(raiz);
 }
