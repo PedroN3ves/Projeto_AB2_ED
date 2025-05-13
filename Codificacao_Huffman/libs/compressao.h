@@ -7,7 +7,6 @@
 
 #define ASCII 256
 
-// 29 bytes
 /**
  * Estrutura que representa um nó da arvore de Huffman e também da lista encadeada
  * 
@@ -28,12 +27,12 @@ typedef struct noHuffman {
 // Estrutura para armazenar códigos de Huffman
 typedef struct tabelaHuffman {
     void *byte;
-    char codigo[ASCII];
+    char codigo[ASCII]; //máximo de caracteres possíveis
 } tabelaHuffman;
 
 // Estrutura de Min Heap
 typedef struct heap {
-    noHuffman **dados;
+    noHuffman **dados; // por eficiencia e segurança (evitar copias da struct, facilitar reorganizar a heap e etc)
     int tamanho;
     int capacidade;
 } heap;

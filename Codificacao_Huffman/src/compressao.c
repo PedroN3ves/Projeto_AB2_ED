@@ -38,7 +38,7 @@ noHuffman *criar_no(void* byte, int frequencia)
  * @param head Ponteiro para o inicio da lista de nós
  * @param byte Byte a ser adicionado/atualizado
  */
-void add_atualizar(noHuffman **head, void* byte)
+void add_atualizar(noHuffman **head, void* byte) // Modifica o ponteiro original da lista
 {
     noHuffman *atual = *head;
     noHuffman *anterior = NULL;
@@ -232,7 +232,7 @@ void serializar_arvore(noHuffman *raiz, FILE *saida, int *tam_arvore)
         return;
     }
 
-    // for folha
+    // se for folha
     if (raiz->left == NULL && raiz->right == NULL)
     {
         unsigned char byte = *(unsigned char*)raiz->byte;
@@ -272,7 +272,7 @@ void construir_tabela(noHuffman *no, char *codigo_atual, int profundidade, tabel
         return;
     }
 
-    // for folha
+    // se for folha
     if (no->left == NULL && no->right == NULL)
     {
         tabela[*i].byte = malloc(1);
@@ -371,7 +371,7 @@ void escrever_cabecalho(FILE *saida, int lixo, int tam_arvore)
     cabecalho = cabecalho | (lixo << 13);
     cabecalho = cabecalho | (tam_arvore & 0b0001111111111111); // impedir que tam_arvore "vaze" para o lixo;
     fputc(cabecalho >> 8, saida);
-    fputc(cabecalho & 0b11111111, saida); // garantir que o primeiro byte seja 00000000
+    fputc(cabecalho & 0b11111111, saida);
 }
 
 /**
